@@ -1,0 +1,20 @@
+{
+  "devDependencies": {
+    "@types/node": "^22.13.14",
+    "@types/winston": "^2.4.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "tsc && node dist/test.mjs",
+    "start:product": "tsc && node dist/testProduct.mjs"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "mongodb": "^6.15.0",
+    "mongoose": "^8.13.1",
+    "winston": "^3.17.0"
+  }
+}
