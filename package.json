@@ -1,20 +1,23 @@
 {
   "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.1",
     "@types/node": "^22.13.14",
     "@types/winston": "^2.4.4",
+    "newman": "^6.2.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.2"
   },
   "type": "module",
   "scripts": {
-    "build": "tsc",
-    "start": "tsc && node dist/test.mjs",
-    "start:product": "tsc && node dist/testProduct.mjs"
+    "app:start": "tsc && node dist/server.mjs",
+    "tests:postman": "newman run tests/postman/api-service-ts.postman_collection.json"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "dotenv": "^16.4.7",
+    "express": "^4.21.2",
     "mongodb": "^6.15.0",
-    "mongoose": "^8.13.1",
     "winston": "^3.17.0"
   }
 }

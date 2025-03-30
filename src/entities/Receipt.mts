@@ -1,7 +1,6 @@
 import {Product} from "./Product.mjs";
 
 export class Receipt {
-    // TODO: After adding MongoDB write logic to write the last id + 1 of the last receipt's id
     name: string
     surname: string
     address: string
