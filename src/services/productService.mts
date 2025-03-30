@@ -1,4 +1,3 @@
-// файл: productService.mts
 import { collections } from "../config/db.mjs";
 import { logger } from "../utils/logger.mjs";
 import { ObjectId } from "mongodb";
@@ -17,6 +16,7 @@ export async function addProduct(product: Product) {
     try {
         const result = await collections.products.insertOne(product);
         logger.info(`Product ID: ${result.insertedId} saved successfully`);
+        return result.insertedId
     } catch (e) {
         logger.error(`Failed to save product. Error: ${e}`);
     }

@@ -17,6 +17,7 @@ export async function addReceipt(receipt: Receipt) {
     try {
         const result = await collections.receipts?.insertOne(receipt)
         logger.info(`Order ID: ${result?.insertedId} saved successfully`)
+        return result.insertedId
     } catch (e) {
         logger.error(`Failed to save order. Error: ${e}`)
     }

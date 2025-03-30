@@ -1,0 +1,1162 @@
+{
+	"info": {
+		"_postman_id": "f5d5ff77-dd1a-4806-890a-b4428e734361",
+		"name": "api-service-ts",
+		"description": "Tests for API service written on Typescript Express with MongoDB integration: [https://github.com/Matterlinkk/ts-express-mongo-api-service](https://github.com/Matterlinkk/ts-express-mongo-api-service)  \n  \nThere are 2 suites of tests for manipulating product and receipt objects",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "32179016"
+	},
+	"item": [
+		{
+			"name": "products-tests",
+			"item": [
+				{
+					"name": "Add product",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const host = pm.collectionVariables.get(\"host\");\r",
+									"const port = pm.collectionVariables.get(\"port\");\r",
+									"\r",
+									"pm.test('Check product created sucessfully', function () {\r",
+									"    pm.expect(pm.response.json().message).to.equal('Product created');\r",
+									"});\r",
+									"\r",
+									"pm.test('Check status code is 201', function () {\r",
+									"    pm.expect(pm.response.code).to.equal(201);\r",
+									"});\r",
+									"\r",
+									"const productId = pm.response.json().id;\r",
+									"\r",
+									"const deletionRequest = {\r",
+									"            url: `http://${host}:${port}/api/products/${productId}`,\r",
+									"            method: \"DELETE\"\r",
+									"        };\r",
+									"\r",
+									"        pm.sendRequest(deletionRequest, (deleteError, deleteResponse) => {\r",
+									"            if (deleteError) {\r",
+									"                console.error(\"Delete request failed:\", deleteError);\r",
+									"                return;\r",
+									"            }\r",
+									"\r",
+									"            console.log(\"Product deleted:\", deleteResponse.status);\r",
+									"            pm.expect(deleteResponse.code).to.equal(200);\r",
+									"        });"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const randomString = Math.random().toString(36).substring(2, 7);\r",
+									"pm.collectionVariables.set(\"productName\", `productName${randomString}`);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"productName\":\"{{productName}}\",\r\n    \"productDescription\": \"Some product description\",\r\n    \"productQty\": 3,\r\n    \"price\": 100\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{host}}:{{port}}/api/products/",
+							"protocol": "http",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"products",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search product",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const host = pm.collectionVariables.get(\"host\");\r",
+									"const port = pm.collectionVariables.get(\"port\");\r",
+									"\r",
+									"const randomString = Math.random().toString(36).substring(2, 7);\r",
+									"pm.collectionVariables.set(\"productName\", `productName${randomString}`);\r",
+									"\r",
+									"const productName = pm.collectionVariables.get(\"productName\");\r",
+									"\r",
+									"const requestBody = {\r",
+									"    productName: productName,\r",
+									"    productDescription: \"product description\",\r",
+									"    productQty: 111,\r",
+									"    price: 111\r",
+									"};\r",
+									"\r",
+									"pm.sendRequest({\r",
+									"    url: `http://${host}:${port}/api/products`,\r",
+									"    method: \"POST\",\r",
+									"    header: {\r",
+									"        \"Content-Type\": \"application/json\"\r",
+									"    },\r",
+									"    body: {\r",
+									"        mode: \"raw\",\r",
+									"        raw: JSON.stringify(requestBody)\r",
+									"    }\r",
+									"}, function (error, response) {\r",
+									"    if (error) {\r",
+									"        console.error(\"Creation request failed:\", error);\r",
+									"        return;\r",
+									"    }\r",
+									"\r",
+									"    const responseId = response.json().id\r",
+									"\r",
+									"    console.log(\"responseId\", responseId);\r",
+									"    pm.collectionVariables.set(\"productId\", responseId);\r",
+									"    console.log(\"Product created:\", response.status);\r",
+									"    pm.expect(response.code).to.equal(201);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const host = pm.collectionVariables.get(\"host\");\r",
+									"const port = pm.collectionVariables.get(\"port\");\r",
+									"const productId = pm.collectionVariables.get(\"productId\");\r",
+									"\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.expect(pm.response.code).to.equal(200);\r",
+									"});\r",
+									"\r",
+									"function wait(ms) {\r",
+									"    return new Promise(resolve => setTimeout(resolve, ms));\r",
+									"}\r",
+									"\r",
+									"async function retryFindAndDeleteProduct(productId, maxTries = 5, delay = 300) {\r",
+									"    for (let i = 0; i < maxTries; i++) {\r",
+									"        const res = await new Promise((resolve) => {\r",
+									"            pm.sendRequest({\r",
+									"                url: `http://${host}:${port}/api/products`,\r",
+									"                method: \"GET\"\r",
+									"            }, (err, response) => resolve(response));\r",
+									"        });\r",
+									"\r",
+									"        const list = res.json();\r",
+									"        const found = list.find(p => p._id === productId);\r",
+									"\r",
+									"        if (found) {\r",
+									"            pm.test(\"List has more than 0 items\", function () {\r",
+									"                pm.expect(list.length).to.be.greaterThan(0);\r",
+									"            });\r",
+									"\r",
+									"            pm.sendRequest({\r",
+									"                url: `http://${host}:${port}/api/products/${productId}`,\r",
+									"                method: \"DELETE\"\r",
+									"            }, (deleteError, deleteResponse) => {\r",
+									"                if (deleteError) {\r",
+									"                    console.error(\"Delete request failed:\", deleteError);\r",
+									"                    return;\r",
+									"                }\r",
+									"\r",
+									"                console.log(\"Product deleted:\", deleteResponse.status);\r",
+									"                pm.test(\"Product is deleted\", function () {\r",
+									"                    pm.expect(deleteResponse.code).to.equal(200);\r",
+									"                });\r",
+									"            });\r",
+									"\r",
+									"            return;\r",
+									"        }\r",
+									"\r",
+									"        await wait(delay);\r",
+									"    }\r",
+									"\r",
+									"    pm.test(\"Product was created and found\", function () {\r",
+									"        pm.expect.fail(`Product with ID ${productId} was not found after ${maxTries} retries`);\r",
+									"    });\r",
+									"}\r",
+									"\r",
+									"retryFindAndDeleteProduct(productId);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://{{host}}:{{port}}/api/products/",
+							"protocol": "http",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"products",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete product",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const host = pm.collectionVariables.get(\"host\");\r",
+									"const port = pm.collectionVariables.get(\"port\");\r",
+									"\r",
+									"const randomString = Math.random().toString(36).substring(2, 7);\r",
+									"const productName = `productName${randomString}`;\r",
+									"pm.collectionVariables.set(\"productName\", productName);\r",
+									"\r",
+									"const requestBody = {\r",
+									"    productName: productName,\r",
+									"    productDescription: \"product description\",\r",
+									"    productQty: 111,\r",
+									"    price: 111\r",
+									"};\r",
+									"\r",
+									"pm.sendRequest({\r",
+									"    url: `http://${host}:${port}/api/products`,\r",
+									"    method: \"POST\",\r",
+									"    header: {\r",
+									"        \"Content-Type\": \"application/json\"\r",
+									"    },\r",
+									"    body: {\r",
+									"        mode: \"raw\",\r",
+									"        raw: JSON.stringify(requestBody)\r",
+									"    }\r",
+									"}, function (error, response) {\r",
+									"    if (error) {\r",
+									"        console.error(\"Creation request failed:\", error);\r",
+									"        return;\r",
+									"    }\r",
+									"\r",
+									"    const responseId = response.json().id\r",
+									"\r",
+									"    console.log(\"responseId\", responseId);\r",
+									"    pm.collectionVariables.set(\"productId\", responseId);\r",
+									"    console.log(\"Product created:\", response.status);\r",
+									"    pm.expect(response.code).to.equal(201);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const host = pm.collectionVariables.get(\"host\");\r",
+									"const port = pm.collectionVariables.get(\"port\");\r",
+									"const productId = pm.collectionVariables.get(\"productId\");\r",
+									"\r",
+									"pm.test('Status code is 200', function () {\r",
+									"    pm.expect(pm.response.code).to.equal(200);\r",
+									"});\r",
+									"\r",
+									"function wait(ms) {\r",
+									"    return new Promise(resolve => setTimeout(resolve, ms));\r",
+									"}\r",
+									"\r",
+									"async function retryEnsureDeleted(productId, maxTries = 5, delay = 300) {\r",
+									"    for (let i = 0; i < maxTries; i++) {\r",
+									"        const response = await new Promise((resolve) => {\r",
+									"            pm.sendRequest({\r",
+									"                url: `http://${host}:${port}/api/products/`,\r",
+									"                method: \"GET\"\r",
+									"            }, (err, res) => resolve(res));\r",
+									"        });\r",
+									"\r",
+									"        const list = response.json();\r",
+									"        const found = list.find(p => p._id === productId);\r",
+									"\r",
+									"        if (!found) {\r",
+									"            pm.test(\"Product was deleted successfully\", () => {\r",
+									"                pm.expect(true).to.be.true;\r",
+									"            });\r",
+									"            return;\r",
+									"        }\r",
+									"\r",
+									"        await wait(delay);\r",
+									"    }\r",
+									"\r",
+									"    pm.test(\"Product was deleted successfully\", () => {\r",
+									"        pm.expect.fail(`Product with ID ${productId} was not deleted after ${maxTries} retries`);\r",
+									"    });\r",
+									"}\r",
+									"\r",
+									"retryEnsureDeleted(productId);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://{{host}}:{{port}}/api/products/{{productId}}",
+							"protocol": "http",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"products",
+								"{{productId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update product",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const host = pm.collectionVariables.get(\"host\");\r",
+									"const port = pm.collectionVariables.get(\"port\");\r",
+									"\r",
+									"const randomString = Math.random().toString(36).substring(2, 7);\r",
+									"const productName = `productName${randomString}`;\r",
+									"pm.collectionVariables.set(\"productName\", productName);\r",
+									"const productNameChanged = `changedProductName${randomString}`;\r",
+									"pm.collectionVariables.set(\"productNameChanged\", productNameChanged);\r",
+									"\r",
+									"const requestBody = {\r",
+									"    productName: productName,\r",
+									"    productDescription: \"product description\",\r",
+									"    productQty: 111,\r",
+									"    price: 111\r",
+									"};\r",
+									"\r",
+									"pm.sendRequest({\r",
+									"    url: `http://${host}:${port}/api/products`,\r",
+									"    method: \"POST\",\r",
+									"    header: {\r",
+									"        \"Content-Type\": \"application/json\"\r",
+									"    },\r",
+									"    body: {\r",
+									"        mode: \"raw\",\r",
+									"        raw: JSON.stringify(requestBody)\r",
+									"    }\r",
+									"}, function (error, response) {\r",
+									"    if (error) {\r",
+									"        console.error(\"Creation request failed:\", error);\r",
+									"        return;\r",
+									"    }\r",
+									"\r",
+									"    const responseId = response.json().id\r",
+									"\r",
+									"    console.log(\"responseId\", responseId);\r",
+									"    pm.collectionVariables.set(\"productId\", responseId);\r",
+									"    console.log(\"Product created:\", response.status);\r",
+									"    pm.expect(response.code).to.equal(201);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.expect(pm.response.code).to.equal(200);\r",
+									"});\r",
+									"\r",
+									"const host = pm.collectionVariables.get(\"host\");\r",
+									"const port = pm.collectionVariables.get(\"port\");\r",
+									"const productId = pm.collectionVariables.get(\"productId\");\r",
+									"const productNameChanged = pm.collectionVariables.get(\"productNameChanged\");\r",
+									"\r",
+									"function wait(ms) {\r",
+									"    return new Promise(resolve => setTimeout(resolve, ms));\r",
+									"}\r",
+									"\r",
+									"async function retryVerifyUpdatedProduct(productNameChanged, maxTries = 5, delay = 300) {\r",
+									"    for (let i = 0; i < maxTries; i++) {\r",
+									"        const response = await new Promise((resolve) => {\r",
+									"            pm.sendRequest({\r",
+									"                url: `http://${host}:${port}/api/products/`,\r",
+									"                method: \"GET\"\r",
+									"            }, (err, res) => resolve(res));\r",
+									"        });\r",
+									"\r",
+									"        const list = response.json();\r",
+									"        const found = list.filter(p => p.productName === productNameChanged);\r",
+									"\r",
+									"        if (found.length === 1) {\r",
+									"            pm.test(\"Product was updated successfully\", () => {\r",
+									"                pm.expect(found.length).to.eq(1);\r",
+									"            });\r",
+									"\r",
+									"            pm.sendRequest({\r",
+									"                url: `http://${host}:${port}/api/products/${productId}`,\r",
+									"                method: \"DELETE\"\r",
+									"            }, (deleteError, deleteResponse) => {\r",
+									"                if (deleteError) {\r",
+									"                    console.error(\"Delete request failed:\", deleteError);\r",
+									"                    return;\r",
+									"                }\r",
+									"\r",
+									"                pm.test(\"Product was deleted after update\", function () {\r",
+									"                    pm.expect(deleteResponse.code).to.equal(200);\r",
+									"                });\r",
+									"            });\r",
+									"\r",
+									"            return;\r",
+									"        }\r",
+									"\r",
+									"        await wait(delay);\r",
+									"    }\r",
+									"\r",
+									"    pm.test(\"Product update verification failed\", () => {\r",
+									"        pm.expect.fail(`Product with name \"${productNameChanged}\" not found after ${maxTries} retries`);\r",
+									"    });\r",
+									"}\r",
+									"\r",
+									"retryVerifyUpdatedProduct(productNameChanged);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"productName\": \"{{productNameChanged}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{host}}:{{port}}/api/products/{{productId}}",
+							"protocol": "http",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"products",
+								"{{productId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "receipts-tests",
+			"item": [
+				{
+					"name": "Create receipt",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function randomString(length = 6) {\r",
+									"    return Math.random().toString(36).substring(2, 2 + length);\r",
+									"}\r",
+									"function randomInt(min, max) {\r",
+									"    return Math.floor(Math.random() * (max - min + 1)) + min;\r",
+									"}\r",
+									"function randomFloat(min, max, decimals = 2) {\r",
+									"    const factor = Math.pow(10, decimals);\r",
+									"    return Math.round((Math.random() * (max - min) + min) * factor) / factor;\r",
+									"}\r",
+									"\r",
+									"pm.collectionVariables.set(\"name\", `Name_${randomString()}`);\r",
+									"pm.collectionVariables.set(\"surname\", `Surname_${randomString()}`);\r",
+									"pm.collectionVariables.set(\"address\", `Address_${randomString(10)}`);\r",
+									"pm.collectionVariables.set(\"quantity\", randomInt(1, 10));\r",
+									"pm.collectionVariables.set(\"price\", randomFloat(100, 999));\r",
+									"pm.collectionVariables.set(\"orderDate\", new Date());\r",
+									"\r",
+									"const productArray = [\r",
+									"    {\r",
+									"        productName: `Product_${randomString()}`,\r",
+									"        productDescription: `Description_${randomString(10)}`,\r",
+									"        productQty: randomInt(1, 20),\r",
+									"        price: randomFloat(10, 200)\r",
+									"    }\r",
+									"];\r",
+									"pm.collectionVariables.set(\"productArray\", JSON.stringify(productArray));\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const host = pm.collectionVariables.get(\"host\");\r",
+									"const port = pm.collectionVariables.get(\"port\");\r",
+									"\r",
+									"const receiptId = pm.response.json().id;\r",
+									"console.log(`receiptId: ${receiptId}`);\r",
+									"\r",
+									"pm.test(\"Status code is 201\", function () {\r",
+									"    pm.expect(pm.response.code).to.equal(201);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response body contains 'Receipt created'\", function () {\r",
+									"    pm.expect(pm.response.json().message).to.equal(\"Receipt created\");\r",
+									"});\r",
+									"\r",
+									"function wait(ms) {\r",
+									"    return new Promise(resolve => setTimeout(resolve, ms));\r",
+									"}\r",
+									"\r",
+									"async function retryFindReceipt(receiptId, maxTries = 5, delay = 300) {\r",
+									"    for (let i = 0; i < maxTries; i++) {\r",
+									"        const res = await new Promise((resolve) => {\r",
+									"            pm.sendRequest({\r",
+									"                url: `http://${host}:${port}/api/receipts/`,\r",
+									"                method: \"GET\"\r",
+									"            }, (err, response) => resolve(response));\r",
+									"        });\r",
+									"\r",
+									"        const found = res.json().filter(r => r._id === receiptId);\r",
+									"\r",
+									"        if (found.length > 0) {\r",
+									"            pm.test(\"Receipt is found in list\", () => {\r",
+									"                pm.expect(found.length).to.eq(1);\r",
+									"            });\r",
+									"\r",
+									"            pm.sendRequest({\r",
+									"                url: `http://${host}:${port}/api/receipts/${receiptId}`,\r",
+									"                method: \"DELETE\"\r",
+									"            }, (err, res) => {\r",
+									"                pm.test(\"Receipt is deleted\", function () {\r",
+									"                    pm.expect(res.code).to.eq(200);\r",
+									"                });\r",
+									"            });\r",
+									"\r",
+									"            return;\r",
+									"        }\r",
+									"\r",
+									"        await wait(delay);\r",
+									"    }\r",
+									"\r",
+									"    pm.test(\"Receipt is found in list\", () => {\r",
+									"        pm.expect.fail(`Receipt ${receiptId} not found after ${maxTries} attempts`);\r",
+									"    });\r",
+									"}\r",
+									"\r",
+									"retryFindReceipt(receiptId);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"{{name}}\",\r\n  \"surname\": \"{{surname}}\",\r\n  \"address\": \"{{address}}\",\r\n  \"quantity\": {{quantity}},\r\n  \"price\": {{price}},\r\n  \"orderDate\": \"{{orderDate}}\",\r\n  \"product\": {{productArray}}\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{host}}:{{port}}/api/receipts/",
+							"protocol": "http",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"receipts",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create receipt",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const host = pm.collectionVariables.get(\"host\");\r",
+									"const port = pm.collectionVariables.get(\"port\");\r",
+									"\r",
+									"function randomString(length = 6) {\r",
+									"    return Math.random().toString(36).substring(2, 2 + length);\r",
+									"}\r",
+									"function randomInt(min, max) {\r",
+									"    return Math.floor(Math.random() * (max - min + 1)) + min;\r",
+									"}\r",
+									"function randomFloat(min, max, decimals = 2) {\r",
+									"    const factor = Math.pow(10, decimals);\r",
+									"    return Math.round((Math.random() * (max - min) + min) * factor) / factor;\r",
+									"}\r",
+									"\r",
+									"const productArray = [\r",
+									"    {\r",
+									"        productName: `Product_${randomString()}`,\r",
+									"        productDescription: `Description_${randomString(10)}`,\r",
+									"        productQty: randomInt(1, 20),\r",
+									"        price: randomFloat(10, 200)\r",
+									"    }\r",
+									"];\r",
+									"\r",
+									"const totalPrice = productArray.reduce((sum, p) => sum + p.price * p.productQty, 0);\r",
+									"const totalQty = productArray.reduce((sum, p) => sum + p.productQty, 0);\r",
+									"\r",
+									"const receiptBody = {\r",
+									"    name: `Name_${randomString(4)}`,\r",
+									"    surname: `Surname_${randomString(5)}`,\r",
+									"    address: `Street_${randomInt(1, 99)}`,\r",
+									"    product: productArray,\r",
+									"    quantity: totalQty,\r",
+									"    price: totalPrice\r",
+									"};\r",
+									"\r",
+									"pm.sendRequest({\r",
+									"    url: `http://${host}:${port}/api/receipts`,\r",
+									"    method: \"POST\",\r",
+									"    header: {\r",
+									"        \"Content-Type\": \"application/json\"\r",
+									"    },\r",
+									"    body: {\r",
+									"        mode: \"raw\",\r",
+									"        raw: JSON.stringify(receiptBody)\r",
+									"    }\r",
+									"}, function (err, res) {\r",
+									"    if (err) {\r",
+									"        console.error(\"Receipt creation failed:\", err);\r",
+									"        return;\r",
+									"    }\r",
+									"\r",
+									"    const json = res.json();\r",
+									"    const receiptId = json.id || json._id;\r",
+									"\r",
+									"    pm.collectionVariables.set(\"receiptId\", receiptId);\r",
+									"    console.log(\"Receipt created:\", receiptId);\r",
+									"    pm.expect(res.code).to.equal(201);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const host = pm.collectionVariables.get(\"host\");\r",
+									"const port = pm.collectionVariables.get(\"port\");\r",
+									"const receiptId = pm.collectionVariables.get(\"receiptId\");\r",
+									"\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.expect(pm.response.code).to.equal(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response body has more than 0 items\", function () {\r",
+									"    pm.expect(pm.response.json()).to.have.length.greaterThan(0);\r",
+									"});\r",
+									"\r",
+									"pm.sendRequest({\r",
+									"                url: `http://${host}:${port}/api/receipts/${receiptId}`,\r",
+									"                method: \"DELETE\"\r",
+									"            }, (err, res) => {\r",
+									"                pm.test(\"Receipt is deleted\", function () {\r",
+									"                    pm.expect(res.code).to.eq(200);\r",
+									"                });\r",
+									"            });"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://{{host}}:{{port}}/api/receipts/",
+							"protocol": "http",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"receipts",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete receipt",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const host = pm.collectionVariables.get(\"host\");\r",
+									"const port = pm.collectionVariables.get(\"port\");\r",
+									"\r",
+									"function randomString(length = 6) {\r",
+									"    return Math.random().toString(36).substring(2, 2 + length);\r",
+									"}\r",
+									"function randomInt(min, max) {\r",
+									"    return Math.floor(Math.random() * (max - min + 1)) + min;\r",
+									"}\r",
+									"function randomFloat(min, max, decimals = 2) {\r",
+									"    const factor = Math.pow(10, decimals);\r",
+									"    return Math.round((Math.random() * (max - min) + min) * factor) / factor;\r",
+									"}\r",
+									"\r",
+									"const productArray = [\r",
+									"    {\r",
+									"        productName: `Product_${randomString()}`,\r",
+									"        productDescription: `Description_${randomString(10)}`,\r",
+									"        productQty: randomInt(1, 20),\r",
+									"        price: randomFloat(10, 200)\r",
+									"    }\r",
+									"];\r",
+									"\r",
+									"const totalPrice = productArray.reduce((sum, p) => sum + p.price * p.productQty, 0);\r",
+									"const totalQty = productArray.reduce((sum, p) => sum + p.productQty, 0);\r",
+									"\r",
+									"const receiptBody = {\r",
+									"    name: `Name_${randomString(4)}`,\r",
+									"    surname: `Surname_${randomString(5)}`,\r",
+									"    address: `Street_${randomInt(1, 99)}`,\r",
+									"    product: productArray,\r",
+									"    quantity: totalQty,\r",
+									"    price: totalPrice\r",
+									"};\r",
+									"\r",
+									"pm.sendRequest({\r",
+									"    url: `http://${host}:${port}/api/receipts`,\r",
+									"    method: \"POST\",\r",
+									"    header: {\r",
+									"        \"Content-Type\": \"application/json\"\r",
+									"    },\r",
+									"    body: {\r",
+									"        mode: \"raw\",\r",
+									"        raw: JSON.stringify(receiptBody)\r",
+									"    }\r",
+									"}, function (err, res) {\r",
+									"    if (err) {\r",
+									"        console.error(\"Receipt creation failed:\", err);\r",
+									"        return;\r",
+									"    }\r",
+									"\r",
+									"    const json = res.json();\r",
+									"    const receiptId = json.id.toString();\r",
+									"\r",
+									"    pm.collectionVariables.set(\"receiptId\", receiptId);\r",
+									"    console.log(\"Receipt created:\", receiptId);\r",
+									"    pm.expect(res.code).to.equal(201);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const host = pm.collectionVariables.get(\"host\");\r",
+									"const port = pm.collectionVariables.get(\"port\");\r",
+									"\r",
+									"const receiptId = pm.collectionVariables.get(\"receiptId\");\r",
+									"\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.expect(pm.response.code).to.equal(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response body contains 'Receipt deleted'\", function () {\r",
+									"    pm.expect(pm.response.json().message).to.equal(\"Receipt deleted\");\r",
+									"});\r",
+									"\r",
+									"function wait(ms) {\r",
+									"    return new Promise(resolve => setTimeout(resolve, ms));\r",
+									"}\r",
+									"\r",
+									"async function retryEnsureDeleted(receiptId, maxTries = 5, delay = 300) {\r",
+									"    for (let i = 0; i < maxTries; i++) {\r",
+									"        const res = await new Promise((resolve) => {\r",
+									"            pm.sendRequest({\r",
+									"                url: `http://${host}:${port}/api/receipts/`,\r",
+									"                method: \"GET\"\r",
+									"            }, (err, response) => resolve(response));\r",
+									"        });\r",
+									"\r",
+									"        const found = res.json().filter(r => r._id === receiptId);\r",
+									"\r",
+									"        if (found.length === 0) {\r",
+									"            pm.test(\"Receipt is deleted\", () => {\r",
+									"                pm.expect(found.length).to.eq(0);\r",
+									"            });\r",
+									"            return;\r",
+									"        }\r",
+									"\r",
+									"        await wait(delay);\r",
+									"    }\r",
+									"\r",
+									"    pm.test(\"Receipt is deleted\", () => {\r",
+									"        pm.expect.fail(`Receipt ${receiptId} still exists after ${maxTries} checks`);\r",
+									"    });\r",
+									"}\r",
+									"\r",
+									"retryEnsureDeleted(receiptId);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://{{host}}:{{port}}/api/receipts/{{receiptId}}",
+							"protocol": "http",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"receipts",
+								"{{receiptId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update receipt",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const host = pm.collectionVariables.get(\"host\");\r",
+									"const port = pm.collectionVariables.get(\"port\");\r",
+									"\r",
+									"function randomString(length = 6) {\r",
+									"    return Math.random().toString(36).substring(2, 2 + length);\r",
+									"}\r",
+									"function randomInt(min, max) {\r",
+									"    return Math.floor(Math.random() * (max - min + 1)) + min;\r",
+									"}\r",
+									"function randomFloat(min, max, decimals = 2) {\r",
+									"    const factor = Math.pow(10, decimals);\r",
+									"    return Math.round((Math.random() * (max - min) + min) * factor) / factor;\r",
+									"}\r",
+									"\r",
+									"const productArray = [\r",
+									"    {\r",
+									"        productName: `Product_${randomString()}`,\r",
+									"        productDescription: `Description_${randomString(10)}`,\r",
+									"        productQty: randomInt(1, 20),\r",
+									"        price: randomFloat(10, 200)\r",
+									"    }\r",
+									"];\r",
+									"\r",
+									"const totalPrice = productArray.reduce((sum, p) => sum + p.price * p.productQty, 0);\r",
+									"const totalQty = productArray.reduce((sum, p) => sum + p.productQty, 0);\r",
+									"\r",
+									"const receiptBody = {\r",
+									"    name: `Name_${randomString(4)}`,\r",
+									"    surname: `Surname_${randomString(5)}`,\r",
+									"    address: `Street_${randomInt(1, 99)}`,\r",
+									"    product: productArray,\r",
+									"    quantity: totalQty,\r",
+									"    price: totalPrice\r",
+									"};\r",
+									"\r",
+									"pm.sendRequest({\r",
+									"    url: `http://${host}:${port}/api/receipts`,\r",
+									"    method: \"POST\",\r",
+									"    header: {\r",
+									"        \"Content-Type\": \"application/json\"\r",
+									"    },\r",
+									"    body: {\r",
+									"        mode: \"raw\",\r",
+									"        raw: JSON.stringify(receiptBody)\r",
+									"    }\r",
+									"}, function (err, res) {\r",
+									"    if (err) {\r",
+									"        console.error(\"Receipt creation failed:\", err);\r",
+									"        return;\r",
+									"    }\r",
+									"\r",
+									"    const json = res.json();\r",
+									"    const receiptId = json.id.toString();\r",
+									"\r",
+									"    pm.collectionVariables.set(\"receiptId\", receiptId);\r",
+									"    console.log(\"Receipt created:\", receiptId);\r",
+									"    pm.expect(res.code).to.equal(201);\r",
+									"});\r",
+									"\r",
+									"pm.collectionVariables.set(\"changedName\", `changedName_${randomString()}`);\r",
+									"pm.collectionVariables.set(\"changedSurname\", `changedSurname_${randomString()}`);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const host = pm.collectionVariables.get(\"host\");\r",
+									"const port = pm.collectionVariables.get(\"port\");\r",
+									"\r",
+									"const receiptId = pm.collectionVariables.get(\"receiptId\");\r",
+									"const changedName = pm.collectionVariables.get(\"changedName\");\r",
+									"const changedSurname = pm.collectionVariables.get(\"changedSurname\");\r",
+									"\r",
+									"function wait(ms) {\r",
+									"    return new Promise(resolve => setTimeout(resolve, ms));\r",
+									"}\r",
+									"\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.expect(pm.response.code).to.equal(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response body contains 'Receipt updated'\", function () {\r",
+									"    pm.expect(pm.response.json().message).to.equal(\"Receipt updated\");\r",
+									"});\r",
+									"\r",
+									"async function retryEnsureUpdated(receiptId, maxTries = 5, delay = 300) {\r",
+									"    for (let i = 0; i < maxTries; i++) {\r",
+									"        const res = await new Promise((resolve) => {\r",
+									"            pm.sendRequest({\r",
+									"                url: `http://${host}:${port}/api/receipts/`,\r",
+									"                method: \"GET\"\r",
+									"            }, (err, response) => resolve(response));\r",
+									"        });\r",
+									"\r",
+									"        const list = res.json();\r",
+									"        const found = list.find(r => r._id === receiptId);\r",
+									"\r",
+									"        console.log(JSON.stringify(found))\r",
+									"\r",
+									"        if (found) {\r",
+									"            pm.test(\"Receipt is updated\", () => {\r",
+									"                pm.expect(found.name).to.eq(changedName);\r",
+									"                pm.expect(found.surname).to.eq(changedSurname);\r",
+									"            });\r",
+									"\r",
+									"            pm.sendRequest({\r",
+									"                url: `http://${host}:${port}/api/receipts/${receiptId}`,\r",
+									"                method: \"DELETE\"\r",
+									"            }, (err, res) => {\r",
+									"                pm.test(\"Receipt is deleted\", function () {\r",
+									"                    pm.expect(res.code).to.eq(200);\r",
+									"                });\r",
+									"            });\r",
+									"\r",
+									"            return;\r",
+									"        }\r",
+									"\r",
+									"        await wait(delay);\r",
+									"    }\r",
+									"\r",
+									"    pm.test(\"Receipt update check failed\", () => {\r",
+									"        pm.expect.fail(`Receipt ${receiptId} not found after ${maxTries} attempts`);\r",
+									"    });\r",
+									"}\r",
+									"\r",
+									"retryEnsureUpdated(receiptId);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"{{changedName}}\",\r\n  \"surname\": \"{{changedSurname}}\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{host}}:{{port}}/api/receipts/{{receiptId}}",
+							"protocol": "http",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"receipts",
+								"{{receiptId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "productName",
+			"value": ""
+		},
+		{
+			"key": "productId",
+			"value": ""
+		},
+		{
+			"key": "host",
+			"value": "localhost",
+			"type": "string"
+		},
+		{
+			"key": "port",
+			"value": "3000",
+			"type": "string"
+		},
+		{
+			"key": "name",
+			"value": ""
+		},
+		{
+			"key": "surname",
+			"value": ""
+		},
+		{
+			"key": "address",
+			"value": ""
+		},
+		{
+			"key": "quantity",
+			"value": ""
+		},
+		{
+			"key": "price",
+			"value": ""
+		},
+		{
+			"key": "orderDate",
+			"value": ""
+		},
+		{
+			"key": "productArray",
+			"value": ""
+		},
+		{
+			"key": "productNameChanged",
+			"value": ""
+		},
+		{
+			"key": "receiptId",
+			"value": ""
+		},
+		{
+			"key": "changedSurname",
+			"value": ""
+		},
+		{
+			"key": "changedName",
+			"value": ""
+		}
+	]
+}
