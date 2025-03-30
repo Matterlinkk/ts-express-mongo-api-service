@@ -21,8 +21,8 @@ npm install
 
 3. Create a ```.env``` file based on the provided template:
 ```bash
-DB_HOST=mongodb-host
-DB_NAME=database-name
+DB_HOST=mongodb_host
+DB_NAME=database_name
 COLLECTION_RECEIPTS_NAME=collection_name
 COLLECTION_PRODUCT_NAME=collection_name
 MONGO_PASSWORD=mongodb_password
