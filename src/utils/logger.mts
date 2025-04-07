@@ -1,13 +1,17 @@
 import { createLogger, format, transports } from 'winston';
-
+import * as dotenv from "dotenv";
 const { combine, timestamp, printf, colorize } = format;
 
 const logFormat = printf(({ level, message, timestamp }) => {
     return `${timestamp} [${level}]: ${message}`;
 });
 
+dotenv.config();
+
+const logLevel = process.env.LOG_LEVEL || 'info';
+
 export const logger = createLogger({
-    level: 'info',
+    level: logLevel,
     format: combine(
         colorize(),
         timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
