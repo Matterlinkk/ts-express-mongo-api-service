@@ -21,12 +21,12 @@ npm install
 
 3. Create a ```.env``` file based on the provided template:
 ```bash
-DB_HOST=mongodb_host
 DB_NAME=database_name
 COLLECTION_RECEIPTS_NAME=collection_name
 COLLECTION_PRODUCT_NAME=collection_name
 MONGO_PASSWORD=mongodb_password
 MONGO_USER=mongodb_username
+LOG_LEVEL=debug
 ```
 
 4. Run the app:
@@ -61,6 +61,9 @@ api-service-ts/
 ├── tests/
 │   └── postman/
 │       └── api-service-ts.postman_collection.json
+│   └── jest/
+│   │   ├── product-tests             # Tests for product CRUD methods 
+│   │   └── receipt-tests             # Tests for receipt CRUD methods  
 ├── .env                              # Environment variables (Replace the placeholders by your data)
 ├── .gitignore
 ├── package.json
@@ -74,6 +77,10 @@ To run Postman's scope of api tests you need to run this command:
 ```bash
 npm run tests:postman
 ```
+To run Jest tests for CRUD methods you need to run this command:
+```bash
+npm run test
+```
 The scope covers all API routes with response status checking, response messages, validation of execution of the specified action
 
 # Make sure
@@ -86,3 +93,5 @@ You've filled the ```.env``` file with your data
 - MongoDB via mongodb
 - Winston for logging
 - dotenv for environment config
+- Postman
+- Jest

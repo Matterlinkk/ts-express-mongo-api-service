@@ -4,6 +4,7 @@
     "@types/express": "^5.0.1",
     "@types/node": "^22.13.14",
     "@types/winston": "^2.4.4",
+    "jest": "^29.7.0",
     "newman": "^6.2.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.2"
@@ -11,7 +12,8 @@
   "type": "module",
   "scripts": {
     "app:start": "tsc && node dist/server.mjs",
-    "tests:postman": "newman run tests/postman/api-service-ts.postman_collection.json"
+    "tests:postman": "newman run tests/postman/api-service-ts.postman_collection.json",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
